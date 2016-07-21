@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -34,6 +35,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import com.cloudbees.plugins.credentials.CredentialsNameProvider;
+import hudson.plugins.git.extensions.impl.SubmoduleOption;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -418,11 +420,23 @@ public class BitbucketSCMSource extends SCMSource {
                 // Defaults to Git
                 BuildChooser buildChooser = revision instanceof AbstractGitSCMSource.SCMRevisionImpl ? new SpecificRevisionBuildChooser(
                         (AbstractGitSCMSource.SCMRevisionImpl) revision) : new DefaultBuildChooser();
+
+                BuildChooserSetting buildChooserSetting = new BuildChooserSetting(buildChooser);
+
+                boolean disableSubmodules = false;
+                boolean recursiveSubmodules = true;
+                boolean trackingSubmodules = true;
+                String reference = null;
+                int timeout = 1;    // in minutes
+                boolean parentCredentials = true;
+                SubmoduleOption submoduleOption = new SubmoduleOption(disableSubmodules, recursiveSubmodules,
+                        trackingSubmodules, reference, timeout, parentCredentials);
+
                 return new GitSCM(
                         getGitRemoteConfigs(h),
                         Collections.singletonList(new BranchSpec(h.getBranchName())),
-                        false, Collections.<SubmoduleConfig>emptyList(),
-                        null, null, Collections.<GitSCMExtension>singletonList(new BuildChooserSetting(buildChooser)));
+                        true, Collections.<SubmoduleConfig>emptyList(),
+                        null, null, Arrays.asList(buildChooserSetting, submoduleOption));
             }
         }
         throw new IllegalArgumentException("An SCMHeadWithOwnerAndRepo required as parameter");
